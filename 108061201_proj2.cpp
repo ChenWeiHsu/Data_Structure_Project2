@@ -1,56 +1,392 @@
 #include <iostream>
 #include <fstream>
 using namespace std;
+#include <stack>
+#include <queue>
+#include <vector>
+#include <list>
 
-class floor;
 
-class object
+// forward declaration
+class AdjNode;
+class AdjList;
+class Queue;
+class Stack;
+class Object;
+class Floor;
+
+////////////////////////////////////////////////////////////////////////////
+/*
+                Node definition start
+*/
+////////////////////////////////////////////////////////////////////////////
+
+/*
+template <class T>
+class Node
 {
-    friend floor;
+    friend class Queue<T>;
+    friend class Stack<T>;
+    private:
+        T value;
+        Node<T>* next;
+    public:
+        Node(const T& x) : value(x), next(nullptr) {};
+        ~Node(){};
+};
+*/
+
+class AdjNode                       // element of adjlist, which store r and c
+{
+    friend AdjList;
+    friend Queue;
+    friend Stack;
+    //friend class floor;
+    private:
+        int r;
+        int c;
+        AdjNode* next;
+    public:
+        AdjNode() : r(0), c(0), next(nullptr) {};
+        AdjNode(int r1, int c1) : r(r1), c(c1), next(nullptr) {};
+        ~AdjNode(){};
+};
+////////////////////////////////////////////////////////////////////////////
+/*
+                Node definition end
+*/
+////////////////////////////////////////////////////////////////////////////
+
+
+////////////////////////////////////////////////////////////////////////////
+/*
+                AdjList definition start
+*/
+////////////////////////////////////////////////////////////////////////////
+class AdjList
+{
+    private:
+        AdjNode* first;
+        AdjNode* last;
+    public:
+        AdjList() : first(nullptr), last(nullptr) {};
+        ~AdjList(){};
+};
+
+////////////////////////////////////////////////////////////////////////////
+/*
+                AdjList definition end
+*/
+////////////////////////////////////////////////////////////////////////////
+
+
+////////////////////////////////////////////////////////////////////////////
+/*
+                Queue definition start
+*/
+////////////////////////////////////////////////////////////////////////////
+
+class Queue
+{
+    private:
+        AdjNode* first;
+        AdjNode* last;
+        int capacity;
+    public:
+        Queue() : first(nullptr), last(nullptr), capacity(0){};
+        ~Queue(){};        
+        void Push(int r1, int c1)
+        {
+            AdjNode* newnode = new AdjNode(r1, c1);
+            if (IsEmpty()) {
+                first = newnode;
+                last = newnode;
+            }
+            else {
+                last->next = newnode;
+                last = newnode;
+            }
+            capacity++;
+        };        
+        void Pop()
+        {
+            if (IsEmpty()) {
+                throw "The queue is empty, there is no element to Pop().";
+                return;
+            }
+            AdjNode* deletenode = first;
+            first = first->next;
+            delete deletenode;
+            capacity--;
+        };
+        bool IsEmpty() const
+        {
+            return (first == nullptr && last == nullptr);
+        };
+        /*
+        T& Front() const
+        {
+            if (IsEmpty())
+                throw "The queue is empty, there is no front.";
+            else
+                return first->value;
+        };
+        T& Rear() const
+        {
+            if (IsEmpty())
+                throw "The queue is empty, there is no rear.";
+            else
+                return last->value;
+        };
+        */
+        void Show()
+        {
+            AdjNode* currentnode = first;
+            cout << "Front" << endl;
+            while (currentnode != nullptr) {
+                cout << "(r, c) : " << currentnode->r << currentnode->c << endl;
+                currentnode = currentnode->next;
+            }
+            cout << "Rear" << endl;
+
+        };
+};
+
+////////////////////////////////////////////////////////////////////////////
+/*
+                Queue definition end
+*/
+////////////////////////////////////////////////////////////////////////////
+
+
+////////////////////////////////////////////////////////////////////////////
+/*
+                Stack definition start
+*/
+////////////////////////////////////////////////////////////////////////////
+
+class Stack
+{
+    private:
+        AdjNode* top;
+        int capacity;
+    public:
+        Stack()
+        {
+            top = nullptr;
+            capacity = 0;
+        };
+        ~Stack(){};
+        void Push(int r1, int c1)
+        {
+            AdjNode* newnode = new AdjNode(r1, c1);
+            if (!IsEmpty()) newnode->next = top;
+            top = newnode;
+            capacity++;
+
+        };
+        void Pop()
+        {
+            if (IsEmpty()) {
+                throw "The stack is empty, there is no element to Pop().";
+                return;
+            }
+            AdjNode* deletenode = top;
+            top = top->next;
+            delete deletenode;
+            capacity--;
+        };
+        bool IsEmpty() const
+        {
+            return (top == nullptr);
+        };
+        /*
+        T& Top() const
+        {
+            return top->value;
+        };
+        */
+        void Show()
+        {
+            AdjNode* currentnode = top;
+            cout << "Top" << endl;
+            while (currentnode != nullptr) {
+                cout << "(r, c) : " << currentnode->r << currentnode->c << endl;
+                currentnode = currentnode->next;
+            }
+            cout << "End" << endl;
+        };
+};
+
+////////////////////////////////////////////////////////////////////////////
+/*
+                Stack definition end
+*/
+////////////////////////////////////////////////////////////////////////////
+
+
+////////////////////////////////////////////////////////////////////////////
+/*
+                object definition start
+*/
+////////////////////////////////////////////////////////////////////////////
+
+class Object
+{
+    friend Floor;
     private:
         int ob_row;
         int ob_col;
         char ob_type;
-        //adjList adjlist;
+        int distance_to_R;
+        AdjList adjlist;
+        //AdjNode parent;
     public:
-        object(int r, int c, char tpye);
-        ~object();
+        Object(int r, int c, char type, int d = 0): ob_row(r), ob_col(c), ob_type(type), distance_to_R(d) {};
+        Object(){};
+        ~Object(){};
+        int Row()
+        {
+            return ob_row;
+        };
+        int Col()
+        {
+            return ob_col;
+        };
+        char Type()
+        {
+            return ob_type;
+        };
+        int Distance_to_R()
+        {
+            return distance_to_R;
+        };
 
 };
 
-object::object(int r, int c, char type): ob_row(r), ob_col(c), ob_type(type) {};
+////////////////////////////////////////////////////////////////////////////
+/*
+                Object definition end
+*/
+////////////////////////////////////////////////////////////////////////////
 
-object::~object()
-{
-    ob_row = 0;
-    ob_col = 0;
-    ob_type = '0';
 
-};
+////////////////////////////////////////////////////////////////////////////
+/*
+                Floor definition start
+*/
+////////////////////////////////////////////////////////////////////////////
 
-class floor
+
+
+
+
+
+
+
+
+
+
+
+
+
+/*
+class object
 {
     private:
-        int row;
-        int col;
-        object ***map;
+        AdjList adjlist;    // an adjlist with element adjnodes
+        int distance_to_R;
+        int ob_r;
+        int ob_c;
+        char ob_type;
+        //adjnode parent;
+
+}
+
+class AdjList
+{
+    private:
+        AdjList* first;
+        AdjList* last;
     public:
-        floor(int r, int c);
-        ~floor();
+        AdjList()
+        {
+            first = nullptr;
+            last = nullptr;
+        };
+        ~AdjList();
+
+};
+class AdjNode                       // element of adjlist, which store r and c
+{
+    friend class AdjList;
+    //friend class floor;
+    private:
+        int r;
+        int c;
+        AdjNode* next;
+    public:
+        AdjNode()
+        {
+            r = 0;
+            c = 0;
+            next = nullptr;
+        };
+        AdjNode(int r, int c)
+        {
+            r = r;
+            c = c;
+            next = nullptr;
+        };
+        ~AdjNode(){};
+}
+*/
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+class Floor
+{
+    private:
+        int row;            // the total row of the floor
+        int col;            // the total col of the floor
+        int battery;        // battery of the floor clean robot
+        bool** visited;
+        
+        Object R;
+        Object*** map;      // a matirx that store the pointer of the object
+
+        Stack NotVisit;
+        Queue AnsList;
+    public:
+        Floor(int r, int c, int b);
+        ~Floor();
         void Add_Object(int r, int c, char type);
         void Print();
         char Show_Type(int i, int j);
 };
 
-floor::floor(int r, int c): row(r), col(c)
+Floor::Floor(int r, int c, int b): row(r), col(c), battery(b)
 {
-    map = new object** [row];
+    map = new Object** [row];
     for (int i = 0; i < row; i++) {
-        map[i] = new object* [col];
+        map[i] = new Object* [col];
     }
 };
 
-floor::~floor()
+Floor::~Floor()
 {
     for (int i = 0; i < row; i++) {
         delete map[i];
@@ -58,22 +394,22 @@ floor::~floor()
     delete map;
 };
 
-void floor::Add_Object(int i, int j, char type)
+void Floor::Add_Object(int i, int j, char type)
 {
-    map[i][j] = new object (i, j, type);
+    map[i][j] = new Object(i, j, type);
 };
 
-void floor::Print()
+void Floor::Print()
 {
     for (int i = 0; i < row; i++) {
         for (int j = 0; j < col; j++) {
-            cout << map[i][j]->ob_type << " ";
+            cout << map[i][j]->ob_type;
         }
         cout << endl;
     }
 };
 
-char floor::Show_Type(int i, int j)
+char Floor::Show_Type(int i, int j)
 {
     return map[i][j]->ob_type;
 };
@@ -84,7 +420,8 @@ int main(int argc, char *argv[])
     int col;
     int battery;
     char object_type;
-
+    
+    
     ifstream infile;
     infile.open(argv[1]);
 
@@ -97,7 +434,7 @@ int main(int argc, char *argv[])
     infile >> row >> col >> battery;
     cout << row << " " << col << " " << battery << endl;
     
-    floor F(row, col);                                          // construct a floor
+    Floor F(row, col, battery);                                          // construct a floor
 
     for (int i = 0; i < row; i++) {
         for (int j = 0; j < col; j++) {

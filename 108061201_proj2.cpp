@@ -116,7 +116,7 @@ class Queue
         AdjNode* last;
         int capacity;
     public:
-        Queue() : first(nullptr), last(nullptr), capacity(0){};
+        Queue() : first(nullptr), last(nullptr), capacity(0) {};
         ~Queue(){};        
         void Push(int r1, int c1)
         {
@@ -131,16 +131,16 @@ class Queue
             }
             capacity++;
         };        
-        void Push(AdjNode n)
+        void Push(AdjNode& n)
         {
-            AdjNode newnode = n;
+            AdjNode* newnode = &n;
             if (IsEmpty()) {
-                first = &newnode;
-                last = &newnode;
+                first = newnode;
+                last = newnode;
             }
             else {
-                last->next = &newnode;
-                last = &newnode;
+                last->next = newnode;
+                last = newnode;
             }
             capacity++;
         }
@@ -214,11 +214,7 @@ class Stack
         AdjNode* top;
         int capacity;
     public:
-        Stack()
-        {
-            top = nullptr;
-            capacity = 0;
-        };
+        Stack() : top(nullptr), capacity(0) {};
         ~Stack(){};
         void Push(int r1, int c1)
         {
@@ -227,6 +223,13 @@ class Stack
             top = newnode;
             capacity++;
 
+        };
+        void Push(AdjNode& n)
+        {
+            AdjNode* newnode = &n;
+            if (!IsEmpty()) newnode->next = top;
+            top =  newnode;
+            capacity++;
         };
         void Pop()
         {
@@ -243,12 +246,13 @@ class Stack
         {
             return (top == nullptr);
         };
-        /*
-        T& Top() const
+        AdjNode& Top() const
         {
-            return top->value;
+            if (IsEmpty())
+                throw "The stack is empty, there is no top";
+            else
+                return *top;
         };
-        */
         void Show()
         {
             AdjNode* currentnode = top;
@@ -423,6 +427,7 @@ class Floor
         void Set_Graph();
         void Set_DTR();
         void Map_DTR(int i, int j);
+        void DFS();
 };
 
 Floor::Floor(int r, int c, int b): row(r), col(c), battery(b)
@@ -542,7 +547,7 @@ void Floor::Set_DTR()
     // set object's distance_to_R
     Queue q;
     AdjNode current_adjnode;
-    q.Push(R.r, R.c);
+    q.Push(R);
     visited[R.r][R.c] = true;
     while (!q.IsEmpty()) {
         current_adjnode = q.Front();
@@ -577,12 +582,47 @@ void Floor::Set_DTR()
     }
     delete [] visited;
 };
-/*
-void Floor::DTS()   // 
+
+void Floor::DFS()
 {
+    // new visited[][]
+    visited = new bool* [row];
+    for (int i = 0; i < row; i++) {
+        visited[i] = new bool [col];
+    }
 
+    // initialize visited[][]
+    for (int i = 0; i < row; i++) {
+        for (int j = 0; j < col; j++) {
+            visited[i][j] = false;
+        }
+    }
+
+    Stack s;
+    AdjNode currentnode;
+    s.Push(R);
+    while (!s.IsEmpty()) {
+        currentnode = s.Top();
+        s.Pop();
+        if (!visited[currentnode.r][currentnode.c]) {
+            visited[currentnode.r][currentnode.c] = true;
+            cout << "Now Floor Mapping Machine is on (" << currentnode.r << ", " << currentnode.c << ")" << endl;
+            for (AdjNode* curnode = map[currentnode.r][currentnode.c]->adjlist.first; curnode != nullptr; curnode = curnode->next) {
+                if (!visited[curnode->r][curnode->c]) {
+                    s.Push(curnode->r, curnode->c);
+                    //visited[curnode->r][curnode->c] = true;
+
+                }
+            }
+        }
+    }
+    // delete visited[][]
+    for (int i = 0; i < row; i++) {
+        delete [] visited[i];
+    }
+    delete [] visited;
 };
-
+/*
 void Floor::Return()
 {
     // find the distance is minus one and go
@@ -638,7 +678,7 @@ int main(int argc, char *argv[])
     F.Print();
     F.Set_Graph();
     F.Set_DTR();
-
+    F.DFS();
     //F.Map_DTR(1, 1);
     //F.Map_DTR(1, 2);
     //cout << "DTR(1, 2): " << F.map[1][2]->distance_to_R << endl;

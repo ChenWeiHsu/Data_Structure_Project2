@@ -1,11 +1,14 @@
 #include <iostream>
 #include <fstream>
+#include <time.h>
+#include <chrono>
 using namespace std;
+/*
 #include <stack>
 #include <queue>
 #include <vector>
 #include <list>
-
+*/
 
 // forward declaration
 class AdjNode;
@@ -41,7 +44,7 @@ class AdjNode                       // element of adjlist, which store r and c
     friend AdjList;
     friend Queue;
     friend Stack;
-    //friend class floor;
+    friend Floor;
     private:
         int r;
         int c;
@@ -63,6 +66,7 @@ class AdjNode                       // element of adjlist, which store r and c
                 AdjList definition start
 */
 ////////////////////////////////////////////////////////////////////////////
+/*
 class AdjList
 {
     private:
@@ -71,8 +75,24 @@ class AdjList
     public:
         AdjList() : first(nullptr), last(nullptr) {};
         ~AdjList(){};
+        void Add_Node(int r1, int c1)
+        {
+            AdjNode* newnode = new AdjNode(r1, c1);
+            if (IsEmpty()) {
+                first = newnode;
+                last = newnode;
+            }
+            else {
+                last->next = newnode;
+                last = newnode;
+            }
+        };
+        bool IsEmpty()
+        {
+            return (first == nullptr && last == nullptr);
+        };
 };
-
+*/
 ////////////////////////////////////////////////////////////////////////////
 /*
                 AdjList definition end
@@ -88,6 +108,9 @@ class AdjList
 
 class Queue
 {
+    friend Floor;
+    friend Object;
+    friend AdjNode;
     private:
         AdjNode* first;
         AdjNode* last;
@@ -108,6 +131,19 @@ class Queue
             }
             capacity++;
         };        
+        void Push(AdjNode n)
+        {
+            AdjNode newnode = n;
+            if (IsEmpty()) {
+                first = &newnode;
+                last = &newnode;
+            }
+            else {
+                last->next = &newnode;
+                last = &newnode;
+            }
+            capacity++;
+        }
         void Pop()
         {
             if (IsEmpty()) {
@@ -116,6 +152,7 @@ class Queue
             }
             AdjNode* deletenode = first;
             first = first->next;
+            if (first == nullptr) last = nullptr;
             delete deletenode;
             capacity--;
         };
@@ -123,32 +160,38 @@ class Queue
         {
             return (first == nullptr && last == nullptr);
         };
-        /*
-        T& Front() const
+        AdjNode& Front() const
         {
             if (IsEmpty())
                 throw "The queue is empty, there is no front.";
             else
-                return first->value;
+                return *first;
         };
-        T& Rear() const
+        AdjNode& Rear() const
         {
             if (IsEmpty())
                 throw "The queue is empty, there is no rear.";
             else
-                return last->value;
+                return *last;
         };
-        */
         void Show()
         {
             AdjNode* currentnode = first;
             cout << "Front" << endl;
+            if (first == nullptr) cout << "first is null" << endl;
+            else cout << "first is not null" << endl;
+            
             while (currentnode != nullptr) {
                 cout << "(r, c) : " << currentnode->r << currentnode->c << endl;
                 currentnode = currentnode->next;
             }
-            cout << "Rear" << endl;
 
+            cout << "Rear" << endl;
+            if (last == nullptr) cout << "last is null" << endl;
+            else {
+                cout << "last is not null" << endl;
+                cout << "last stores " << "(" << last->r << ", " << last->c << ")" << endl;
+            }
         };
 };
 
@@ -239,10 +282,11 @@ class Object
         int ob_col;
         char ob_type;
         int distance_to_R;
-        AdjList adjlist;
+        //AdjList adjlist;
+        Queue adjlist;
         //AdjNode parent;
     public:
-        Object(int r, int c, char type, int d = 0): ob_row(r), ob_col(c), ob_type(type), distance_to_R(d) {};
+        Object(int r, int c, char type, int d = -1): ob_row(r), ob_col(c), ob_type(type), distance_to_R(d) {};
         Object(){};
         ~Object(){};
         int Row()
@@ -365,7 +409,7 @@ class Floor
         int battery;        // battery of the floor clean robot
         bool** visited;
         
-        Object R;
+        AdjNode R;
         Object*** map;      // a matirx that store the pointer of the object
 
         Stack NotVisit;
@@ -376,6 +420,9 @@ class Floor
         void Add_Object(int r, int c, char type);
         void Print();
         char Show_Type(int i, int j);
+        void Set_Graph();
+        void Set_DTR();
+        void Map_DTR(int i, int j);
 };
 
 Floor::Floor(int r, int c, int b): row(r), col(c), battery(b)
@@ -414,14 +461,153 @@ char Floor::Show_Type(int i, int j)
     return map[i][j]->ob_type;
 };
 
+void Floor::Map_DTR(int i, int j)
+{
+    cout << map[i][j]->distance_to_R << endl;
+};
+
+void Floor::Set_Graph()
+{
+    // set AdjNode R
+    for (int i = 0; i < row; i++) {
+        for (int j = 0; j < col; j++) {
+            if (map[i][j]->ob_type == 'R') {
+                map[i][j]->distance_to_R = 0;
+                R.r = i;
+                R.c = j;
+            }
+        }
+    }    
+
+    // set adjlist
+    for (int i = 1; i < row - 1; i++) {
+        for (int j = 1; j < col - 1; j++) {            
+            if (map[i][j]->ob_type != '1') {
+                if (map[i - 1][j]->ob_type != '1')
+                    map[i][j]->adjlist.Push(i - 1, j);      // up
+                if (map[i][j + 1]->ob_type != '1')
+                    map[i][j]->adjlist.Push(i, j + 1);      // right
+                if (map[i + 1][j]->ob_type != '1')
+                    map[i][j]->adjlist.Push(i + 1, j);      // down
+                if (map[i][j - 1]->ob_type != '1')
+                    map[i][j]->adjlist.Push(i, j - 1);      // left
+            }
+        }
+    }
+
+    // set surrounding adjlist(if R is on the surrounding)
+    for (int j = 0; j < col; j++) {
+        if (map[0][j]->ob_type != '1' && map[1][j]->ob_type != '1')
+            map[0][j]->adjlist.Push(1, j);                      // down
+        if (map[row - 1][j]->ob_type != '1' && map[row - 2][j]->ob_type != '1')
+            map[row - 1][j]->adjlist.Push(row - 2, j);          // up
+    }
+
+    for (int i = 0; i < row; i++) { 
+        if (map[i][0]->ob_type != '1' && map[i][1]->ob_type != '1')
+            map[i][0]->adjlist.Push(i, 1);                      // right
+        if (map[i][col - 1]->ob_type != '1' && map[i][col - 2]->ob_type != '1')
+            map[i][col - 1]->adjlist.Push(i, col - 2);          // left
+    }
+
+    for (int i = 0; i <row; i++) {
+        for (int j = 0; j < col; j++) {
+            cout << "(i, j, type): " << map[i][j]->ob_row << map[i][j]->ob_col << map[i][j]->ob_type << endl;
+            cout << "AdjList: ";
+            if (map[i][j]->adjlist.IsEmpty()) cout << "None";
+            for (AdjNode* curnode = map[i][j]->adjlist.first; curnode != nullptr; curnode = curnode->next) {
+                cout << "(" << curnode->r << ", " << curnode->c << ") ";
+            }
+            cout << endl << "-----------------" << endl;
+        }
+    }
+};
+
+// set distance_to_R
+void Floor::Set_DTR()
+{
+    // new visited[][]
+    visited = new bool* [row];
+    for (int i = 0; i < row; i++) {
+        visited[i] = new bool [col];
+    }
+
+    // initialize visited[][]
+    for (int i = 0; i < row; i++) {
+        for (int j = 0; j < col; j++) {
+            visited[i][j] = false;
+        }
+    }
+
+    // set object's distance_to_R
+    Queue q;
+    AdjNode current_adjnode;
+    q.Push(R.r, R.c);
+    visited[R.r][R.c] = true;
+    while (!q.IsEmpty()) {
+        current_adjnode = q.Front();
+        
+        cout << "current_adjnode (r, c): (" << current_adjnode.r << ", " << current_adjnode.c << ")" << endl;
+        q.Show();
+        q.Pop();
+        cout << "current_adjnode (r, c): (" << current_adjnode.r << ", " << current_adjnode.c << ")" << endl;
+        q.Show();
+        //output(currentnode);
+        
+        for (AdjNode* curnode = map[current_adjnode.r][current_adjnode.c]->adjlist.first; curnode != nullptr; curnode = curnode->next) {
+            if (!visited[curnode->r][curnode->c]) {
+                q.Push(curnode->r, curnode->c);
+                visited[curnode->r][curnode->c] = true;
+                map[curnode->r][curnode->c]->distance_to_R = map[current_adjnode.r][current_adjnode.c]->distance_to_R + 1;
+            }
+        }
+        
+    }
+
+    for (int i = 0; i < row; i++) {
+        for (int j = 0; j < col; j++) {
+            cout << "(" << map[i][j]->ob_row << ", " << map[i][j]->ob_col << ")'s DTR: " << map[i][j]->distance_to_R << endl;
+        }
+        cout << endl;
+    }
+
+    // delete visited[][]
+    for (int i = 0; i < row; i++) {
+        delete [] visited[i];
+    }
+    delete [] visited;
+};
+/*
+void Floor::DTS()   // 
+{
+
+};
+
+void Floor::Return()
+{
+    // find the distance is minus one and go
+};
+*/
+////////////////////////////////////////////////////////////////////////////
+/*
+                Floor definition start
+*/
+////////////////////////////////////////////////////////////////////////////
+
+
+////////////////////////////////////////////////////////////////////////////
+/*
+                main program start
+*/
+////////////////////////////////////////////////////////////////////////////
 int main(int argc, char *argv[])
 {
     int row;
     int col;
     int battery;
     char object_type;
-    
-    
+    clock_t start = clock();
+
     ifstream infile;
     infile.open(argv[1]);
 
@@ -447,9 +633,24 @@ int main(int argc, char *argv[])
             F.Add_Object(i, j, object_type);            
         }
     }
+    infile.close();
 
     F.Print();
+    F.Set_Graph();
+    F.Set_DTR();
 
+    //F.Map_DTR(1, 1);
+    //F.Map_DTR(1, 2);
+    //cout << "DTR(1, 2): " << F.map[1][2]->distance_to_R << endl;
+    //cout << "DTR(1, 1): " << F.map[1][1]->distance_to_R << endl;
+
+
+
+
+
+
+
+/*  OUTPUT FILE
     ofstream outfile("108061201_proj2.path");
     if (outfile.is_open()) {
         for (int i = 0; i < row; i++) {
@@ -460,7 +661,7 @@ int main(int argc, char *argv[])
         }
         outfile.close();
     }
-
+*/
 
 //    bool *visited;
 //    visited = new bool [4];
@@ -472,5 +673,8 @@ int main(int argc, char *argv[])
 //    }
 //    cout << endl;
 
+    clock_t end = clock();
+    double time_taken = double(end - start) / CLOCKS_PER_SEC;
+    cout << "Time: " << time_taken << endl;
     return 0;
-} 
+}

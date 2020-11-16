@@ -258,7 +258,7 @@ class Stack
             AdjNode* currentnode = top;
             cout << "Top" << endl;
             while (currentnode != nullptr) {
-                cout << "(r, c) : " << currentnode->r << currentnode->c << endl;
+                cout << "(r, c) : " << currentnode->r << " " << currentnode->c << endl;
                 currentnode = currentnode->next;
             }
             cout << "End" << endl;
@@ -428,6 +428,8 @@ class Floor
         void Set_DTR();
         void Map_DTR(int i, int j);
         void DFS();
+        bool Whole_Floor_Viewed();
+        void Return_R(int currentnode_row, int currentnode_col);
 };
 
 Floor::Floor(int r, int c, int b): row(r), col(c), battery(b)
@@ -469,6 +471,17 @@ char Floor::Show_Type(int i, int j)
 void Floor::Map_DTR(int i, int j)
 {
     cout << map[i][j]->distance_to_R << endl;
+};
+
+bool Floor::Whole_Floor_Viewed()
+{
+    bool b = true;
+    for (int i = 0; i < row; i++) {
+        for (int j = 0; j < col; j++) {
+            if (map[i][j]->ob_type == '0' && visited[i][j] == false) b = false;
+        }
+    }
+    return b;
 };
 
 void Floor::Set_Graph()
@@ -557,7 +570,6 @@ void Floor::Set_DTR()
         q.Pop();
         cout << "current_adjnode (r, c): (" << current_adjnode.r << ", " << current_adjnode.c << ")" << endl;
         q.Show();
-        //output(currentnode);
         
         for (AdjNode* curnode = map[current_adjnode.r][current_adjnode.c]->adjlist.first; curnode != nullptr; curnode = curnode->next) {
             if (!visited[curnode->r][curnode->c]) {
@@ -566,7 +578,6 @@ void Floor::Set_DTR()
                 map[curnode->r][curnode->c]->distance_to_R = map[current_adjnode.r][current_adjnode.c]->distance_to_R + 1;
             }
         }
-        
     }
 
     for (int i = 0; i < row; i++) {
@@ -599,35 +610,66 @@ void Floor::DFS()
     }
 
     Stack s;
+    Stack pass;
     AdjNode currentnode;
+    bool all_listnode_viewed = true;
     s.Push(R);
     while (!s.IsEmpty()) {
         currentnode = s.Top();
         s.Pop();
+        //cout << currentnode.r << " " << currentnode.c << endl;
         if (!visited[currentnode.r][currentnode.c]) {
             visited[currentnode.r][currentnode.c] = true;
-            cout << "Now Floor Mapping Machine is on (" << currentnode.r << ", " << currentnode.c << ")" << endl;
+            pass.Push(currentnode.r, currentnode.c);
+            cout << "Now Floor Cleaning Robot is on (" << currentnode.r << ", " << currentnode.c << ")" << endl;
             for (AdjNode* curnode = map[currentnode.r][currentnode.c]->adjlist.first; curnode != nullptr; curnode = curnode->next) {
                 if (!visited[curnode->r][curnode->c]) {
                     s.Push(curnode->r, curnode->c);
-                    //visited[curnode->r][curnode->c] = true;
-
+                    all_listnode_viewed = false;
                 }
             }
+            
+            if (all_listnode_viewed) {
+                if (Whole_Floor_Viewed())
+                    Return_R(currentnode.r, currentnode.c);
+                else {
+                    pass.Pop();
+                    while ((abs(pass.Top().r - s.Top().r) + abs(pass.Top().c - s.Top().c)) != 1) {
+                        cout << "Now Floor Cleaning Robot is on (" << pass.Top().r << ", " << pass.Top().c << ")" << endl;
+                        pass.Pop();
+                    }
+                    cout << "Now Floor Cleaning Robot is on (" << pass.Top().r << ", " << pass.Top().c << ")" << endl;
+                }
+            }
+            all_listnode_viewed = true;
         }
     }
+
     // delete visited[][]
     for (int i = 0; i < row; i++) {
         delete [] visited[i];
     }
     delete [] visited;
 };
-/*
-void Floor::Return()
+
+void Floor::Return_R(int currentnode_row, int currentnode_col)
 {
+    int temp_row;
+    int temp_col;
     // find the distance is minus one and go
+    while (!(currentnode_row == R.r && currentnode_col == R.c)) {
+        for (AdjNode* nextnode = map[currentnode_row][currentnode_col]->adjlist.first; nextnode != nullptr; nextnode = nextnode->next) {
+            if (map[nextnode->r][nextnode->c]->distance_to_R == map[currentnode_row][currentnode_col]->distance_to_R - 1) {
+                temp_row = nextnode->r;
+                temp_col = nextnode->c;
+                cout << "Now Floor Cleaning Robot is on (" << nextnode->r << ", " << nextnode->c << ")" << endl;
+            }
+        }
+        currentnode_row = temp_row;
+        currentnode_col = temp_col;
+    }
 };
-*/
+
 ////////////////////////////////////////////////////////////////////////////
 /*
                 Floor definition start

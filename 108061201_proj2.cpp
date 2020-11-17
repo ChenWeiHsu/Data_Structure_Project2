@@ -41,7 +41,7 @@ class Node
 
 class AdjNode                       // element of adjlist, which store r and c
 {
-    friend AdjList;
+    //friend AdjList;
     friend Queue;
     friend Stack;
     friend Floor;
@@ -108,9 +108,9 @@ class AdjList
 
 class Queue
 {
-    friend Floor;
     friend Object;
-    friend AdjNode;
+    friend Floor;
+    //friend AdjNode;
     private:
         AdjNode* first;
         AdjNode* last;
@@ -146,10 +146,8 @@ class Queue
         }
         void Pop()
         {
-            if (IsEmpty()) {
+            if (IsEmpty())
                 throw "The queue is empty, there is no element to Pop().";
-                return;
-            }
             AdjNode* deletenode = first;
             first = first->next;
             if (first == nullptr) last = nullptr;
@@ -163,27 +161,32 @@ class Queue
         AdjNode& Front() const
         {
             if (IsEmpty())
-                throw "The queue is empty, there is no front.";
+                throw "The queue is empty, there is no front";
             else
                 return *first;
         };
         AdjNode& Rear() const
         {
             if (IsEmpty())
-                throw "The queue is empty, there is no rear.";
+                throw "The queue is empty, there is no front";
             else
                 return *last;
         };
         void Show()
         {
-            AdjNode* currentnode = first;
+            AdjNode* curnode = first;
+            cout << endl;
+            cout << "---QUEUE.Show() QUEUE.Show() QUEUE.Show()---" << endl;
             cout << "Front" << endl;
             if (first == nullptr) cout << "first is null" << endl;
-            else cout << "first is not null" << endl;
+            else {
+                cout << "first is not null" << endl;
+                cout << "first stores " << "(" << first->r << ", " << first->c << ")" << endl;
+            }
             
-            while (currentnode != nullptr) {
-                cout << "(r, c) : " << currentnode->r << currentnode->c << endl;
-                currentnode = currentnode->next;
+            while (curnode != nullptr) {
+                cout << "(r, c) : " << curnode->r << curnode->c << endl;
+                curnode = curnode->next;
             }
 
             cout << "Rear" << endl;
@@ -192,6 +195,12 @@ class Queue
                 cout << "last is not null" << endl;
                 cout << "last stores " << "(" << last->r << ", " << last->c << ")" << endl;
             }
+            cout << "---QUEUE.Show() QUEUE.Show() QUEUE.Show()---" << endl;
+            cout << endl;
+        };
+        int ShowSize()
+        {
+            return capacity;
         };
 };
 
@@ -233,10 +242,9 @@ class Stack
         };
         void Pop()
         {
-            if (IsEmpty()) {
+            if (IsEmpty())
                 throw "The stack is empty, there is no element to Pop().";
-                return;
-            }
+
             AdjNode* deletenode = top;
             top = top->next;
             delete deletenode;
@@ -255,13 +263,16 @@ class Stack
         };
         void Show()
         {
-            AdjNode* currentnode = top;
+            AdjNode* curnode = top;
+            cout << endl;
+            cout << "---STACK.Show() STACK.Show() STACK.Show()---" << endl;
             cout << "Top" << endl;
-            while (currentnode != nullptr) {
-                cout << "(r, c) : " << currentnode->r << " " << currentnode->c << endl;
-                currentnode = currentnode->next;
+            while (curnode != nullptr) {
+                cout << "(r, c) : " << curnode->r << " " << curnode->c << endl;
+                curnode = curnode->next;
             }
-            cout << "End" << endl;
+            cout << "---STACK.Show() STACK.Show() STACK.Show()---" << endl;
+            cout << endl;
         };
 };
 
@@ -286,12 +297,10 @@ class Object
         int ob_col;
         char ob_type;
         int distance_to_R;
-        //AdjList adjlist;
         Queue adjlist;
-        //AdjNode parent;
     public:
-        Object(int r, int c, char type, int d = -1): ob_row(r), ob_col(c), ob_type(type), distance_to_R(d) {};
-        Object(){};
+        Object(int r, int c, char type, int d = -1) : ob_row(r), ob_col(c), ob_type(type), distance_to_R(d) {};
+        Object() : ob_row(0), ob_col(0), ob_type('1'), distance_to_R(-1) {};
         ~Object(){};
         int Row()
         {
@@ -411,13 +420,18 @@ class Floor
         int row;            // the total row of the floor
         int col;            // the total col of the floor
         int battery;        // battery of the floor clean robot
+        int original_battery;
+        int steps;
         bool** visited;
         
         AdjNode R;
+        AdjNode currentnode;
         Object*** map;      // a matirx that store the pointer of the object
 
-        Stack NotVisit;
-        Queue AnsList;
+        Queue ans;
+
+        //Stack NotVisit;
+        //Queue AnsList;
     public:
         Floor(int r, int c, int b);
         ~Floor();
@@ -426,14 +440,19 @@ class Floor
         char Show_Type(int i, int j);
         void Set_Graph();
         void Set_DTR();
-        void Map_DTR(int i, int j);
+        //void Map_DTR(int i, int j);
         void DFS();
         bool Whole_Floor_Viewed();
-        void Return_R(int currentnode_row, int currentnode_col);
+        void Return_R();
+        int Show_Steps();
+        void Output();
+        int ShowSize(){
+            return ans.ShowSize();
+        }
 };
 
-Floor::Floor(int r, int c, int b): row(r), col(c), battery(b)
-{
+Floor::Floor(int r, int c, int b): row(r), col(c), battery(b), original_battery(b), steps(0)
+{    
     map = new Object** [row];
     for (int i = 0; i < row; i++) {
         map[i] = new Object* [col];
@@ -468,11 +487,16 @@ char Floor::Show_Type(int i, int j)
     return map[i][j]->ob_type;
 };
 
+int Floor::Show_Steps()
+{
+    return steps - 1;
+}
+/*
 void Floor::Map_DTR(int i, int j)
 {
     cout << map[i][j]->distance_to_R << endl;
 };
-
+*/
 bool Floor::Whole_Floor_Viewed()
 {
     bool b = true;
@@ -515,19 +539,34 @@ void Floor::Set_Graph()
 
     // set surrounding adjlist(if R is on the surrounding)
     for (int j = 0; j < col; j++) {
+        if (map[0][j]->ob_type == '0')
+            throw "Boundary cannot be 0";
         if (map[0][j]->ob_type != '1' && map[1][j]->ob_type != '1')
             map[0][j]->adjlist.Push(1, j);                      // down
+
+        if (map[row - 1][j]->ob_type == '0')
+            throw "Boundary cannot be 0";
         if (map[row - 1][j]->ob_type != '1' && map[row - 2][j]->ob_type != '1')
             map[row - 1][j]->adjlist.Push(row - 2, j);          // up
     }
 
-    for (int i = 0; i < row; i++) { 
+    for (int i = 0; i < row; i++) {
+        if (map[i][0]->ob_type == '0')
+            throw "Boundary cannot be 0";
         if (map[i][0]->ob_type != '1' && map[i][1]->ob_type != '1')
             map[i][0]->adjlist.Push(i, 1);                      // right
+        
+        if (map[i][col - 1]->ob_type == '0')
+            throw "Boundary cannot be 0";
         if (map[i][col - 1]->ob_type != '1' && map[i][col - 2]->ob_type != '1')
             map[i][col - 1]->adjlist.Push(i, col - 2);          // left
     }
 
+
+/*    
+    // print adjlist
+    cout << "---Set_Graph Set_Graph Set_Graph---" << endl;
+    cout << endl << "-----------------" << endl;
     for (int i = 0; i <row; i++) {
         for (int j = 0; j < col; j++) {
             cout << "(i, j, type): " << map[i][j]->ob_row << map[i][j]->ob_col << map[i][j]->ob_type << endl;
@@ -539,6 +578,9 @@ void Floor::Set_Graph()
             cout << endl << "-----------------" << endl;
         }
     }
+    cout << "---Set_Graph Set_Graph Set_Graph---" << endl;
+*/
+
 };
 
 // set distance_to_R
@@ -565,27 +607,29 @@ void Floor::Set_DTR()
     while (!q.IsEmpty()) {
         current_adjnode = q.Front();
         
-        cout << "current_adjnode (r, c): (" << current_adjnode.r << ", " << current_adjnode.c << ")" << endl;
-        q.Show();
+        //cout << "current_adjnode (r, c): (" << current_adjnode.r << ", " << current_adjnode.c << ")" << endl;
+        //q.Show();
         q.Pop();
-        cout << "current_adjnode (r, c): (" << current_adjnode.r << ", " << current_adjnode.c << ")" << endl;
-        q.Show();
-        
-        for (AdjNode* curnode = map[current_adjnode.r][current_adjnode.c]->adjlist.first; curnode != nullptr; curnode = curnode->next) {
-            if (!visited[curnode->r][curnode->c]) {
-                q.Push(curnode->r, curnode->c);
-                visited[curnode->r][curnode->c] = true;
-                map[curnode->r][curnode->c]->distance_to_R = map[current_adjnode.r][current_adjnode.c]->distance_to_R + 1;
+        //cout << "current_adjnode (r, c): (" << current_adjnode.r << ", " << current_adjnode.c << ")" << endl;
+        //q.Show();
+        for (AdjNode* adjnode = map[current_adjnode.r][current_adjnode.c]->adjlist.first; adjnode != nullptr; adjnode = adjnode->next) {
+            if (!visited[adjnode->r][adjnode->c]) {
+                q.Push(adjnode->r, adjnode->c);
+                visited[adjnode->r][adjnode->c] = true;
+                map[adjnode->r][adjnode->c]->distance_to_R = map[current_adjnode.r][current_adjnode.c]->distance_to_R + 1;
             }
         }
     }
 
+    // print distance_to_R in matrix
+    cout << endl << "distance_to_R :"<< endl;
     for (int i = 0; i < row; i++) {
         for (int j = 0; j < col; j++) {
-            cout << "(" << map[i][j]->ob_row << ", " << map[i][j]->ob_col << ")'s DTR: " << map[i][j]->distance_to_R << endl;
+            printf("%3d ", map[i][j]->distance_to_R);
         }
         cout << endl;
     }
+    cout << endl;
 
     // delete visited[][]
     for (int i = 0; i < row; i++) {
@@ -611,8 +655,8 @@ void Floor::DFS()
 
     Stack s;
     Stack pass;
-    AdjNode currentnode;
     bool all_listnode_viewed = true;
+
     s.Push(R);
     while (!s.IsEmpty()) {
         currentnode = s.Top();
@@ -620,28 +664,80 @@ void Floor::DFS()
         //cout << currentnode.r << " " << currentnode.c << endl;
         if (!visited[currentnode.r][currentnode.c]) {
             visited[currentnode.r][currentnode.c] = true;
-            pass.Push(currentnode.r, currentnode.c);
+            cout << "-----------------------------"  << endl;
             cout << "Now Floor Cleaning Robot is on (" << currentnode.r << ", " << currentnode.c << ")" << endl;
+            ans.Push(currentnode.r, currentnode.c);
+            cout << "battery : " << battery << endl;
+            cout << "steps : " << steps << endl;
+            
+            if (battery == map[currentnode.r][currentnode.c]->distance_to_R + 1 || battery == map[currentnode.r][currentnode.c]->distance_to_R) {
+                cout << "---BACK TO RECHARGE!!!---" << endl;
+                Return_R();
+            }
+
+            
+            pass.Push(currentnode.r, currentnode.c);
+            // push adjlist node that hasn't been viewed, if all adjnodes viewed, then no adjlist
             for (AdjNode* curnode = map[currentnode.r][currentnode.c]->adjlist.first; curnode != nullptr; curnode = curnode->next) {
                 if (!visited[curnode->r][curnode->c]) {
                     s.Push(curnode->r, curnode->c);
                     all_listnode_viewed = false;
                 }
             }
-            
+
+            // if no unviewed adjlist node, go back
             if (all_listnode_viewed) {
                 if (Whole_Floor_Viewed())
-                    Return_R(currentnode.r, currentnode.c);
+                    Return_R();
                 else {
                     pass.Pop();
+                    //cout << pass.Top().r << " " << pass.Top().c << "line 664" << endl;
+                    //cout << s.Top().r << " " << s.Top().c << "line 665" << endl;
+
                     while ((abs(pass.Top().r - s.Top().r) + abs(pass.Top().c - s.Top().c)) != 1) {
-                        cout << "Now Floor Cleaning Robot is on (" << pass.Top().r << ", " << pass.Top().c << ")" << endl;
+                        currentnode.r = pass.Top().r;
+                        currentnode.c = pass.Top().c;
+
+                        //cout << pass.Top().r << " " << pass.Top().c << "line 671" << endl;
+                        //cout << currentnode.r << " " << currentnode.c << "line 672" << endl;
+
+                        cout << "-----------------------------"  << endl;
+                        cout << "Now Floor Cleaning Robot is on (" << currentnode.r << ", " << currentnode.c << ")" << endl;
+                        ans.Push(currentnode.r, currentnode.c);
+                        //outfile << currentnode.r << " " << currentnode.c << endl;
+                        cout << "battery : " << battery << endl;
+                        cout << "steps : " << steps << endl;                    
+                        battery--;
+                        steps++;
                         pass.Pop();
+                        //cout << "battery : " << battery << endl;
+                        //cout << "Now Floor Cleaning Robot is on (" << currentnode.r << ", " << currentnode.c << ")" << endl;
+                        
+                        //if (battery <= map[currentnode.r][currentnode.c]->distance_to_R + 1) {
+                        if (battery == map[currentnode.r][currentnode.c]->distance_to_R + 1 || battery == map[currentnode.r][currentnode.c]->distance_to_R) {
+                            cout << "---BACK TO RECHARGE!!!---" << endl;
+                            Return_R();
+                        }
                     }
-                    cout << "Now Floor Cleaning Robot is on (" << pass.Top().r << ", " << pass.Top().c << ")" << endl;
+                    currentnode.r = pass.Top().r;
+                    currentnode.c = pass.Top().c;
+                    cout << "-----------------------------"  << endl;
+                    cout << "Now Floor Cleaning Robot is on (" << currentnode.r << ", " << currentnode.c << ")" << endl;
+                    ans.Push(currentnode.r, currentnode.c);
+                    //outfile << currentnode.r << " " << currentnode.c << endl;
+                    cout << "battery : " << battery << endl;
+                    cout << "steps : " << steps << endl;
+                    battery--;
+                    steps++;
+                    if (battery == map[currentnode.r][currentnode.c]->distance_to_R + 1 || battery == map[currentnode.r][currentnode.c]->distance_to_R) {
+                        cout << "---BACK TO RECHARGE!!!---" << endl;
+                        Return_R();
+                    }
                 }
             }
             all_listnode_viewed = true;
+            battery--;
+            steps++;
         }
     }
 
@@ -652,24 +748,72 @@ void Floor::DFS()
     delete [] visited;
 };
 
-void Floor::Return_R(int currentnode_row, int currentnode_col)
+void Floor::Return_R()
 {
     int temp_row;
     int temp_col;
+    Stack return_pass;
     // find the distance is minus one and go
-    while (!(currentnode_row == R.r && currentnode_col == R.c)) {
-        for (AdjNode* nextnode = map[currentnode_row][currentnode_col]->adjlist.first; nextnode != nullptr; nextnode = nextnode->next) {
-            if (map[nextnode->r][nextnode->c]->distance_to_R == map[currentnode_row][currentnode_col]->distance_to_R - 1) {
+    return_pass.Push(currentnode.r, currentnode.c);
+    while (!(currentnode.r == R.r && currentnode.c == R.c)) {
+        for (AdjNode* nextnode = map[currentnode.r][currentnode.c]->adjlist.first; nextnode != nullptr; nextnode = nextnode->next) {
+            if (map[nextnode->r][nextnode->c]->distance_to_R == map[currentnode.r][currentnode.c]->distance_to_R - 1) {
                 temp_row = nextnode->r;
-                temp_col = nextnode->c;
-                cout << "Now Floor Cleaning Robot is on (" << nextnode->r << ", " << nextnode->c << ")" << endl;
+                temp_col = nextnode->c;            
             }
         }
-        currentnode_row = temp_row;
-        currentnode_col = temp_col;
+        currentnode.r = temp_row;
+        currentnode.c = temp_col;
+        battery--;
+        steps++;
+        cout << "-----------------------------"  << endl;
+        cout << "Now Floor Cleaning Robot is on (" << currentnode.r << ", " << currentnode.c << ")" << endl;
+        ans.Push(currentnode.r, currentnode.c);
+        //outfile << currentnode.r << " " << currentnode.c << endl;
+        cout << "battery : " << battery << endl;
+        cout << "steps : " << steps << endl;
+        return_pass.Push(currentnode.r, currentnode.c);
+    }
+
+    if (!Whole_Floor_Viewed()) {
+        return_pass.Pop();
+        battery = original_battery;
+
+        while (!return_pass.IsEmpty()) {
+            currentnode.r = return_pass.Top().r;
+            currentnode.c = return_pass.Top().c;
+            battery--;
+            steps++;
+            cout << "-----------------------------"  << endl;
+            cout << "Now Floor Cleaning Robot is on (" << currentnode.r << ", " << currentnode.c << ")" << endl;
+            ans.Push(currentnode.r, currentnode.c);
+            //outfile << currentnode.r << " " << currentnode.c << endl;
+            cout << "battery : " << battery << endl;
+            cout << "steps : " << steps << endl;
+            return_pass.Pop();
+        }
     }
 };
 
+void Floor::Output()
+{
+    ofstream outfile("108061201_proj2.path");
+    if (outfile.is_open()) {
+        outfile << Show_Steps() << endl;
+        for (; !ans.IsEmpty(); ans.Pop()) {
+            outfile << ans.Front().r << " " << ans.Front().c << endl;        
+        }
+    }
+    else
+        cout << "Cannot open output file!" << endl;
+    outfile.close();
+};
+/*
+void Floor::GoTO(int dest_row, int dest_col)
+{
+
+};
+*/
 ////////////////////////////////////////////////////////////////////////////
 /*
                 Floor definition start
@@ -686,7 +830,7 @@ int main(int argc, char *argv[])
 {
     int row;
     int col;
-    int battery;
+    long battery;
     char object_type;
     clock_t start = clock();
 
@@ -694,22 +838,31 @@ int main(int argc, char *argv[])
     infile.open(argv[1]);
 
     // check if the data can be opened
-    if (!infile.is_open()) {                                                    
-        cout << "Caonnot open file!" << endl;
+    if (!infile.is_open()) {
+        cout << "Cannot open input file!" << endl;
         return 0;
     }
 
     infile >> row >> col >> battery;
-    cout << row << " " << col << " " << battery << endl;
-    
-    Floor F(row, col, battery);                                          // construct a floor
+    if (row > 1000) {
+        cout << "Row exceed 1000" << endl;
+        return 0;
+    }
+    if (col > 1000) {
+        cout << "Col exceed 1000" << endl;
+        return 0;
+    }
+    cout << "row: " << row << "   " << "col: " << col << "   " << "battery: " << battery << endl;
+
+    Floor F(row, col, (int)battery);            // construct a floor
 
     for (int i = 0; i < row; i++) {
         for (int j = 0; j < col; j++) {
             infile >> object_type;
             // check if the testcase is valid
             if (!(object_type == '0' || object_type == '1' || object_type == 'R')) {        
-                cout << "invalid testcase parameter!" << endl;
+                cout << object_type << endl;
+                cout << "Battery exceed maximum or Invalid testcase parameter!" << endl;
                 return 0;
             }
             F.Add_Object(i, j, object_type);            
@@ -717,33 +870,15 @@ int main(int argc, char *argv[])
     }
     infile.close();
 
-    F.Print();
+    //F.Print();
     F.Set_Graph();
     F.Set_DTR();
     F.DFS();
-    //F.Map_DTR(1, 1);
-    //F.Map_DTR(1, 2);
-    //cout << "DTR(1, 2): " << F.map[1][2]->distance_to_R << endl;
-    //cout << "DTR(1, 1): " << F.map[1][1]->distance_to_R << endl;
+    cout << F.ShowSize() << endl;
+    F.Output();
+    
+    //OUTPUT FILE
 
-
-
-
-
-
-
-/*  OUTPUT FILE
-    ofstream outfile("108061201_proj2.path");
-    if (outfile.is_open()) {
-        for (int i = 0; i < row; i++) {
-            for (int j = 0; j < col; j++) {
-                outfile << F.Show_Type(i, j) << "";
-            }
-            outfile << endl;
-        }
-        outfile.close();
-    }
-*/
 
 //    bool *visited;
 //    visited = new bool [4];

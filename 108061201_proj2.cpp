@@ -1,18 +1,10 @@
 #include <iostream>
 #include <fstream>
 #include <time.h>
-#include <chrono>
 using namespace std;
-/*
-#include <stack>
-#include <queue>
-#include <vector>
-#include <list>
-*/
 
 // forward declaration
 class AdjNode;
-class AdjList;
 class Queue;
 class Stack;
 class Object;
@@ -24,24 +16,8 @@ class Floor;
 */
 ////////////////////////////////////////////////////////////////////////////
 
-/*
-template <class T>
-class Node
-{
-    friend class Queue<T>;
-    friend class Stack<T>;
-    private:
-        T value;
-        Node<T>* next;
-    public:
-        Node(const T& x) : value(x), next(nullptr) {};
-        ~Node(){};
-};
-*/
-
 class AdjNode                       // element of adjlist, which store r and c
 {
-    //friend AdjList;
     friend Queue;
     friend Stack;
     friend Floor;
@@ -54,48 +30,10 @@ class AdjNode                       // element of adjlist, which store r and c
         AdjNode(int r1, int c1) : r(r1), c(c1), next(nullptr) {};
         ~AdjNode(){};
 };
+
 ////////////////////////////////////////////////////////////////////////////
 /*
                 Node definition end
-*/
-////////////////////////////////////////////////////////////////////////////
-
-
-////////////////////////////////////////////////////////////////////////////
-/*
-                AdjList definition start
-*/
-////////////////////////////////////////////////////////////////////////////
-/*
-class AdjList
-{
-    private:
-        AdjNode* first;
-        AdjNode* last;
-    public:
-        AdjList() : first(nullptr), last(nullptr) {};
-        ~AdjList(){};
-        void Add_Node(int r1, int c1)
-        {
-            AdjNode* newnode = new AdjNode(r1, c1);
-            if (IsEmpty()) {
-                first = newnode;
-                last = newnode;
-            }
-            else {
-                last->next = newnode;
-                last = newnode;
-            }
-        };
-        bool IsEmpty()
-        {
-            return (first == nullptr && last == nullptr);
-        };
-};
-*/
-////////////////////////////////////////////////////////////////////////////
-/*
-                AdjList definition end
 */
 ////////////////////////////////////////////////////////////////////////////
 
@@ -108,9 +46,8 @@ class AdjList
 
 class Queue
 {
-    friend Object;
+    //friend Object;
     friend Floor;
-    //friend AdjNode;
     private:
         AdjNode* first;
         AdjNode* last;
@@ -131,6 +68,7 @@ class Queue
             }
             capacity++;
         };        
+                
         void Push(AdjNode& n)
         {
             AdjNode* newnode = &n;
@@ -143,7 +81,8 @@ class Queue
                 last = newnode;
             }
             capacity++;
-        }
+        };
+
         void Pop()
         {
             if (IsEmpty())
@@ -154,6 +93,7 @@ class Queue
             delete deletenode;
             capacity--;
         };
+
         bool IsEmpty() const
         {
             return (first == nullptr && last == nullptr);
@@ -172,6 +112,7 @@ class Queue
             else
                 return *last;
         };
+
         void Show()
         {
             AdjNode* curnode = first;
@@ -198,6 +139,7 @@ class Queue
             cout << "---QUEUE.Show() QUEUE.Show() QUEUE.Show()---" << endl;
             cout << endl;
         };
+
         int ShowSize()
         {
             return capacity;
@@ -334,86 +276,6 @@ class Object
 */
 ////////////////////////////////////////////////////////////////////////////
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-/*
-class object
-{
-    private:
-        AdjList adjlist;    // an adjlist with element adjnodes
-        int distance_to_R;
-        int ob_r;
-        int ob_c;
-        char ob_type;
-        //adjnode parent;
-
-}
-
-class AdjList
-{
-    private:
-        AdjList* first;
-        AdjList* last;
-    public:
-        AdjList()
-        {
-            first = nullptr;
-            last = nullptr;
-        };
-        ~AdjList();
-
-};
-class AdjNode                       // element of adjlist, which store r and c
-{
-    friend class AdjList;
-    //friend class floor;
-    private:
-        int r;
-        int c;
-        AdjNode* next;
-    public:
-        AdjNode()
-        {
-            r = 0;
-            c = 0;
-            next = nullptr;
-        };
-        AdjNode(int r, int c)
-        {
-            r = r;
-            c = c;
-            next = nullptr;
-        };
-        ~AdjNode(){};
-}
-*/
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 class Floor
 {
     private:
@@ -427,11 +289,7 @@ class Floor
         AdjNode R;
         AdjNode currentnode;
         Object*** map;      // a matirx that store the pointer of the object
-
         Queue ans;
-
-        //Stack NotVisit;
-        //Queue AnsList;
     public:
         Floor(int r, int c, int b);
         ~Floor();
@@ -446,9 +304,6 @@ class Floor
         void Return_R();
         int Show_Steps();
         void Output();
-        int ShowSize(){
-            return ans.ShowSize();
-        }
 };
 
 Floor::Floor(int r, int c, int b): row(r), col(c), battery(b), original_battery(b), steps(0)
@@ -620,7 +475,7 @@ void Floor::Set_DTR()
             }
         }
     }
-
+/*
     // print distance_to_R in matrix
     cout << endl << "distance_to_R :"<< endl;
     for (int i = 0; i < row; i++) {
@@ -630,7 +485,7 @@ void Floor::Set_DTR()
         cout << endl;
     }
     cout << endl;
-
+*/
     // delete visited[][]
     for (int i = 0; i < row; i++) {
         delete [] visited[i];
@@ -664,14 +519,14 @@ void Floor::DFS()
         //cout << currentnode.r << " " << currentnode.c << endl;
         if (!visited[currentnode.r][currentnode.c]) {
             visited[currentnode.r][currentnode.c] = true;
-            cout << "-----------------------------"  << endl;
-            cout << "Now Floor Cleaning Robot is on (" << currentnode.r << ", " << currentnode.c << ")" << endl;
+            //cout << "-----------------------------"  << endl;
+            //cout << "Now Floor Cleaning Robot is on (" << currentnode.r << ", " << currentnode.c << ")" << endl;
             ans.Push(currentnode.r, currentnode.c);
-            cout << "battery : " << battery << endl;
-            cout << "steps : " << steps << endl;
+            //cout << "battery : " << battery << endl;
+            //cout << "steps : " << steps << endl;
             
             if (battery == map[currentnode.r][currentnode.c]->distance_to_R + 1 || battery == map[currentnode.r][currentnode.c]->distance_to_R) {
-                cout << "---BACK TO RECHARGE!!!---" << endl;
+                //cout << "---BACK TO RECHARGE!!!---" << endl;
                 Return_R();
             }
 
@@ -701,12 +556,12 @@ void Floor::DFS()
                         //cout << pass.Top().r << " " << pass.Top().c << "line 671" << endl;
                         //cout << currentnode.r << " " << currentnode.c << "line 672" << endl;
 
-                        cout << "-----------------------------"  << endl;
-                        cout << "Now Floor Cleaning Robot is on (" << currentnode.r << ", " << currentnode.c << ")" << endl;
+                        //cout << "-----------------------------"  << endl;
+                        //cout << "Now Floor Cleaning Robot is on (" << currentnode.r << ", " << currentnode.c << ")" << endl;
                         ans.Push(currentnode.r, currentnode.c);
                         //outfile << currentnode.r << " " << currentnode.c << endl;
-                        cout << "battery : " << battery << endl;
-                        cout << "steps : " << steps << endl;                    
+                        //cout << "battery : " << battery << endl;
+                        //cout << "steps : " << steps << endl;                    
                         battery--;
                         steps++;
                         pass.Pop();
@@ -715,22 +570,22 @@ void Floor::DFS()
                         
                         //if (battery <= map[currentnode.r][currentnode.c]->distance_to_R + 1) {
                         if (battery == map[currentnode.r][currentnode.c]->distance_to_R + 1 || battery == map[currentnode.r][currentnode.c]->distance_to_R) {
-                            cout << "---BACK TO RECHARGE!!!---" << endl;
+                            //cout << "---BACK TO RECHARGE!!!---" << endl;
                             Return_R();
                         }
                     }
                     currentnode.r = pass.Top().r;
                     currentnode.c = pass.Top().c;
-                    cout << "-----------------------------"  << endl;
-                    cout << "Now Floor Cleaning Robot is on (" << currentnode.r << ", " << currentnode.c << ")" << endl;
+                    //cout << "-----------------------------"  << endl;
+                    //cout << "Now Floor Cleaning Robot is on (" << currentnode.r << ", " << currentnode.c << ")" << endl;
                     ans.Push(currentnode.r, currentnode.c);
                     //outfile << currentnode.r << " " << currentnode.c << endl;
-                    cout << "battery : " << battery << endl;
-                    cout << "steps : " << steps << endl;
+                    //cout << "battery : " << battery << endl;
+                    //cout << "steps : " << steps << endl;
                     battery--;
                     steps++;
                     if (battery == map[currentnode.r][currentnode.c]->distance_to_R + 1 || battery == map[currentnode.r][currentnode.c]->distance_to_R) {
-                        cout << "---BACK TO RECHARGE!!!---" << endl;
+                        //cout << "---BACK TO RECHARGE!!!---" << endl;
                         Return_R();
                     }
                 }
@@ -766,12 +621,12 @@ void Floor::Return_R()
         currentnode.c = temp_col;
         battery--;
         steps++;
-        cout << "-----------------------------"  << endl;
-        cout << "Now Floor Cleaning Robot is on (" << currentnode.r << ", " << currentnode.c << ")" << endl;
+        //cout << "-----------------------------"  << endl;
+        //cout << "Now Floor Cleaning Robot is on (" << currentnode.r << ", " << currentnode.c << ")" << endl;
         ans.Push(currentnode.r, currentnode.c);
         //outfile << currentnode.r << " " << currentnode.c << endl;
-        cout << "battery : " << battery << endl;
-        cout << "steps : " << steps << endl;
+        //cout << "battery : " << battery << endl;
+        //cout << "steps : " << steps << endl;
         return_pass.Push(currentnode.r, currentnode.c);
     }
 
@@ -784,12 +639,12 @@ void Floor::Return_R()
             currentnode.c = return_pass.Top().c;
             battery--;
             steps++;
-            cout << "-----------------------------"  << endl;
-            cout << "Now Floor Cleaning Robot is on (" << currentnode.r << ", " << currentnode.c << ")" << endl;
+            //cout << "-----------------------------"  << endl;
+            //cout << "Now Floor Cleaning Robot is on (" << currentnode.r << ", " << currentnode.c << ")" << endl;
             ans.Push(currentnode.r, currentnode.c);
             //outfile << currentnode.r << " " << currentnode.c << endl;
-            cout << "battery : " << battery << endl;
-            cout << "steps : " << steps << endl;
+            //cout << "battery : " << battery << endl;
+            //cout << "steps : " << steps << endl;
             return_pass.Pop();
         }
     }
@@ -808,12 +663,7 @@ void Floor::Output()
         cout << "Cannot open output file!" << endl;
     outfile.close();
 };
-/*
-void Floor::GoTO(int dest_row, int dest_col)
-{
 
-};
-*/
 ////////////////////////////////////////////////////////////////////////////
 /*
                 Floor definition start
@@ -826,6 +676,7 @@ void Floor::GoTO(int dest_row, int dest_col)
                 main program start
 */
 ////////////////////////////////////////////////////////////////////////////
+
 int main(int argc, char *argv[])
 {
     int row;
@@ -874,7 +725,7 @@ int main(int argc, char *argv[])
     F.Set_Graph();
     F.Set_DTR();
     F.DFS();
-    cout << F.ShowSize() << endl;
+    cout << F.Show_Steps() << endl;
     F.Output();
     
     //OUTPUT FILE
@@ -895,3 +746,9 @@ int main(int argc, char *argv[])
     cout << "Time: " << time_taken << endl;
     return 0;
 }
+
+////////////////////////////////////////////////////////////////////////////
+/*
+                main program end
+*/
+////////////////////////////////////////////////////////////////////////////
